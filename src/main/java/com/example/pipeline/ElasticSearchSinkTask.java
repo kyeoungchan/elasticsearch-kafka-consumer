@@ -33,12 +33,16 @@ public class ElasticSearchSinkTask extends SinkTask {
             throw new ConnectException(e.getMessage(), e);
         }
 
-        // 엘라스틱서치에 적재하기 위해 ElasticsearchClient를 적재한다.
+        // 엘라스틱서치에 적재하기 위해 ElasticsearchClient를 생성한다.
         this.esClient = ElasticsearchClientFactory.create(config);
     }
 
     @Override
     public void put(Collection<SinkRecord> records) {
+
+        /* 레코드가 1개 이상으로 들어올 경우, 엘라스틱서치로 전송하기 위한 BulkRequest 인스턴스를 생성한다.
+         * BulkRequest: 1개 이상의 데이터들을 묶음으로 엘라스틱서치로 전송
+         * 레코드들을 BulkRequest 인스턴스에 추가 */
         if (!records.isEmpty()) {
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (SinkRecord record : records) {
@@ -55,6 +59,7 @@ public class ElasticSearchSinkTask extends SinkTask {
             BulkRequest bulkRequest = bulkRequestBuilder.build();
 
             esClient.bulk(bulkRequest)
+                    // 데이터 전송 결과를 비동기로 받아서 확인
                     .whenComplete((bulkResponse, ex) -> {
                         if (ex != null) {
                             log.error(ex.getMessage(), ex);
@@ -74,15 +79,22 @@ public class ElasticSearchSinkTask extends SinkTask {
         }
     }
 
+    /**
+     * flush() 메서드는 일정 주기마다 호출
+     * put() 메서드에서 엘라스틱서치로 데이터를 전송하므로 여기서는 크게 중요치 않다.
+     */
     @Override
     public void flush(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
         log.info("flush");
     }
 
+    /**
+     * 커넥터가 종료될 경우 엘라스틱서치와 연동하는 esClient 변수를 안전하게 종료한다.
+     */
     @Override
     public void stop() {
         try {
-            esClient.close();
+            esClient._transport().close();
         } catch (IOException e) {
             log.info(e.getMessage(), e);
         }
