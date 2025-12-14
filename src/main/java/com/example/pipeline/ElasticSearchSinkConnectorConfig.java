@@ -27,15 +27,24 @@ public class ElasticSearchSinkConnectorConfig extends AbstractConfig {
     private static final String ES_INDEX_DEFAULT_VALUE = "kafka-connector-index";
     private static final String ES_INDEX_DOC = "엘라스틱서치 인덱스 입력";
 
-    public static final String ES_USERNAME = "elastic";
-    public static final String ES_PASSWORD = "huiAcuWoRCmn0viudl2H";
+//    public static final String ES_USERNAME = "elastic";
+    public static final String ES_USERNAME = "es.username";
+    private static final String ES_USERNAME_DEFAULT_VALUE = "elastic";
+    private static final String ES_USERNAME_DOC = "엘라스틱서치 username 입력";
+
+    public static final String ES_PASSWORD = "es.password";
+    private static final String ES_PASSWORD_DEFAULT_VALUE = "password";
+    private static final String ES_PASSWORD_DOC = "엘라스틱서치 password 입력";
+//    public static final String ES_PASSWORD = "huiAcuWoRCmn0viudl2H";
 
     /* 앞서 설정한 es.host, es.port, es.index를 ConfigDef 클래스로 생성
      * ConfigDef 인스턴스는 커넥터에서 설정값이 정상적으로 들어왔는지 검증하기 위해 사용된다. */
     public static ConfigDef CONFIG = new ConfigDef()
             .define(ES_CLUSTER_HOST, Type.STRING, ES_CLUSTER_HOST_DEFAULT_VALUE, Importance.HIGH, ES_CLUSTER_HOST_DOC)
             .define(ES_CLUSTER_PORT, Type.INT, ES_CLUSTER_PORT_DEFAULT_VALUE, Importance.HIGH, ES_CLUSTER_PORT_DOC)
-            .define(ES_INDEX, Type.STRING, ES_INDEX_DEFAULT_VALUE, Importance.HIGH, ES_INDEX_DOC);
+            .define(ES_INDEX, Type.STRING, ES_INDEX_DEFAULT_VALUE, Importance.HIGH, ES_INDEX_DOC)
+            .define(ES_USERNAME, Type.STRING, ES_USERNAME_DEFAULT_VALUE, Importance.HIGH, ES_USERNAME_DOC)
+            .define(ES_PASSWORD, Type.STRING, ES_PASSWORD_DEFAULT_VALUE, Importance.HIGH, ES_PASSWORD_DOC);
 
     public ElasticSearchSinkConnectorConfig(Map<String, String> props) {
         super(CONFIG, props);

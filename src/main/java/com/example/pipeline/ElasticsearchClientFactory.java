@@ -1,7 +1,6 @@
 package com.example.pipeline;
 
 import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -17,7 +16,10 @@ public class ElasticsearchClientFactory {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 AuthScope.ANY,
-                new UsernamePasswordCredentials(config.ES_USERNAME, config.ES_PASSWORD)
+                new UsernamePasswordCredentials(
+                        config.getString(config.ES_USERNAME),
+                        config.getString(config.ES_PASSWORD)
+                )
         );
 
         RestClient restClient = RestClient.builder(
