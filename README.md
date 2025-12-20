@@ -1,3 +1,6 @@
+# 🧑🏻‍💻 엘라스틱서치 싱크 커넥터 로직
+![elasticsearch_sink_connector_logic.jpeg](img/elasticsearch_sink_connector_logic.jpeg)  
+
 # 🧑🏻‍💻 실행 가이드
 ```shell
 # 빌드를 통해 jar 파일 생성
@@ -24,8 +27,14 @@ plugin.path=plugins
 ```
 
 ```shell
+# 엘라스틱서치 싱크 커넥터를 포함된 커넥트 실행
+$ bin/connect-distributed.sh config/connect-distributed.properties
+```
+
+```shell
 # 분산모드 카프카 커넥트에 엘라스틱서치 커넥터 추가됐는지 확인
 $ curl http://localhost:8083/connector-plugins
+# 아래의 결과를 보면 엘라스틱서치 커넥터가 추가된 것을 확인할 수 있다.
 [
   {
     "class":"com.example.pipeline.ElasticSearchSinkConnector",
@@ -51,6 +60,7 @@ $ curl http://localhost:8083/connector-plugins
 ```
 
 ```shell
+# 엘라스틱서치 싱크 커넥터 실행
 $ curl -L -X POST 'localhost:8083/connectors' \
 -H 'Content-Type: application/json' \
 --data-raw '{
@@ -69,4 +79,6 @@ $ curl -L -X POST 'localhost:8083/connectors' \
 
 ```shell
 $ curl -X GET http://localhost:8083/connectors
+# 결과
+["es-sink-connector"]
 ```
