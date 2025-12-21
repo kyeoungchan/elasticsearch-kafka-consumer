@@ -17,6 +17,8 @@ $ mkdir plugins
 $ cd /Users/kyeongchanwoo/projects/elasticsearch-kafka-consumer/build/libs
 $ cp elasticsearch-kafka-consumer-0.0.1-SNAPSHOT.jar ~/kafka/plugins
 
+# 새로 jar 파일 생성 후 덮어쓰기를 바로 하고 싶다면
+$ cp -i build/libs/elasticsearch-kafka-consumer-0.0.1-SNAPSHOT.jar ~/kafka/plugins
 ```
 
 ```shell

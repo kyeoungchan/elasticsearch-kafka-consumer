@@ -48,29 +48,41 @@ public class ElasticSearchSinkTask extends SinkTask {
             BulkRequest.Builder bulkRequestBuilder = new BulkRequest.Builder();
             for (SinkRecord record : records) {
 
+                Object value = record.value();
 
-                if (record.value() == null) {
+                if (value == null) {
                     log.warn("Skipping tombstone record: {}", record);
                     continue;
                 }
 
-                Gson gson = new Gson();
+                Map<String, Object> map;
+
                 /* BulkRequest에 데이터를 추가할 때는 Map 타입의 데이터와 인덱스 이름이 필요하다.
                  * 토픽의 메시지 값은 JSON 형태의 String 타입이므로 JSON을 Map으로 변환할 때는 gson 라이브러리를 사용하여 변환한다.
                  * 인덱스는 사용자로부터 받은 값을 기반으로 설정한다. */
-                try {
-                    Map<String, Object> map = gson.fromJson(record.value().toString(), Map.class);
-                    bulkRequestBuilder.operations(op -> op
-                            .index(idx -> idx
-                                    .index(config.getString(config.ES_INDEX))
-                                    .document(map)
-                            )
-                    );
-                    log.info("record: {}", record);
-                } catch (JsonSyntaxException e) {
-                    log.error("Invalid JSON: {}", record.value());
-                    throw e;
+
+                // 이미 Map이면 그대로 사용
+                if (value instanceof Map<?, ?>) {
+                    map = (Map<String, Object>) value;
+                } else if (value instanceof String) {
+                    try {
+                        map = new Gson().fromJson(value.toString(), Map.class);
+                    } catch (Exception e) {
+                        log.error("Invalid JSON: {}", value);
+                        continue;
+                    }
+                } else {
+                    log.error("Unsupported record value type: {} -> {}",
+                            value.getClass(), value);
+                    continue;
                 }
+                bulkRequestBuilder.operations(op -> op
+                        .index(idx -> idx
+                                .index(config.getString(config.ES_INDEX))
+                                .document(map)
+                        )
+                );
+                log.info("record: {}", record);
             }
             BulkRequest bulkRequest = bulkRequestBuilder.build();
 
