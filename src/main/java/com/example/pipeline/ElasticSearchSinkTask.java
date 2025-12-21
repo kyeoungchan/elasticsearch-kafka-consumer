@@ -1,13 +1,11 @@
 package com.example.pipeline;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.elasticsearch.core.BulkRequest;
-import co.elastic.clients.elasticsearch.core.BulkResponse;
 import com.google.gson.Gson;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
@@ -20,7 +18,7 @@ import org.apache.kafka.connect.sink.SinkTask;
 public class ElasticSearchSinkTask extends SinkTask {
 
     private ElasticSearchSinkConnectorConfig config;
-    private ElasticsearchClient esClient;
+    private ElasticsearchAsyncClient esClient;
 
     @Override
     public String version() {
@@ -31,14 +29,6 @@ public class ElasticSearchSinkTask extends SinkTask {
     public void start(Map<String, String> props) {
         try {
             config = new ElasticSearchSinkConnectorConfig(props);
-
-            log.info("=== ES Connector Configuration ===");
-            log.info("ES Host: {}", config.getString(config.ES_CLUSTER_HOST));
-            log.info("ES Port: {}", config.getInt(config.ES_CLUSTER_PORT));
-            log.info("ES Index: {}", config.getString(config.ES_INDEX));
-            log.info("ES Username: {}", config.getString(config.ES_USERNAME));
-            log.info("================================");
-
         } catch (ConfigException e) {
             throw new ConnectException(e.getMessage(), e);
         }
@@ -95,35 +85,24 @@ public class ElasticSearchSinkTask extends SinkTask {
             }
             BulkRequest bulkRequest = bulkRequestBuilder.build();
 
-            // Retry 로직 추가
-            int maxRetries = 3;
-            for (int i = 1; i <= maxRetries; i++) {
-                try {
-                    // 동기 방식으로 변경
-                    BulkResponse response = esClient.bulk(bulkRequest);
-                    if (response.errors()) {
-                        log.error("Bulk request failed: {}", response);
-                    } else {
-                        log.info("Bulk save Success");
-                    }
-                    // 성공하면 리턴
-                    return;
-                } catch (Exception e) {
-                    log.error("Bulk request failed (attempt {}/{}): {}", i, maxRetries, e.getMessage(), e);
-                    if (i == maxRetries) {
-                        throw new ConnectException("Bulk request failed", e);
-                    }
-
-                    // 재시도 전 대기
-                    try {
-                        Thread.sleep(1000L * i);
-                    } catch (InterruptedException ex) {
-                        Thread.currentThread().interrupt();
-                        throw new ConnectException("Interrupted during retry", ex);
-                    }
-                }
-            }
-
+            esClient.bulk(bulkRequest)
+                    // 데이터 전송 결과를 비동기로 받아서 확인
+                    .whenComplete((bulkResponse, ex) -> {
+                        if (ex != null) {
+                            log.error(ex.getMessage(), ex);
+                        } else {
+                            if (bulkResponse.errors()) {
+                                // 실패한 항목들의 상세 정보 로깅
+                                bulkResponse.items().forEach(item -> {
+                                    if (item.error() != null) {
+                                        log.error("Failed to index document: {}", item.error().reason());
+                                    }
+                                });
+                            } else {
+                                log.info("bulk save success");
+                            }
+                        }
+                    });
         }
     }
 

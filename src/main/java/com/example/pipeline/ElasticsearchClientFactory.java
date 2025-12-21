@@ -1,6 +1,6 @@
 package com.example.pipeline;
 
-import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.elasticsearch.ElasticsearchAsyncClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
 import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
@@ -18,7 +18,7 @@ import org.elasticsearch.client.RestClient;
 
 public class ElasticsearchClientFactory {
 
-    public static ElasticsearchClient create(ElasticSearchSinkConnectorConfig config) {
+    public static ElasticsearchAsyncClient create(ElasticSearchSinkConnectorConfig config) {
         BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(
                 AuthScope.ANY,
@@ -51,6 +51,6 @@ public class ElasticsearchClientFactory {
 
         ElasticsearchTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
 
-        return new ElasticsearchClient(transport);
+        return new ElasticsearchAsyncClient(transport);
     }
 }
